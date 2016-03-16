@@ -8,18 +8,21 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\src\ofxRSSDKv2.cpp">
-      <Filter>src\addons\ofxRSSDKv2</Filter>
+      <Filter>addons\ofxRSSDKv2\src</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
       <UniqueIdentifier>{d8376475-7454-4a24-b08a-aac121d3ad6f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\addons">
-      <UniqueIdentifier>{835c8a08-fb7b-491f-a7d6-0eac24228004}</UniqueIdentifier>
+    <Filter Include="addons">
+      <UniqueIdentifier>{f1dbb994-7cd2-47fb-87f2-91e223bd2196}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\addons\ofxRSSDKv2">
-      <UniqueIdentifier>{8cc49811-b476-495e-a906-ef3e3cdaa25d}</UniqueIdentifier>
+    <Filter Include="addons\ofxRSSDKv2">
+      <UniqueIdentifier>{e18347a2-8220-4d29-af3f-e649ea969321}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons\ofxRSSDKv2\src">
+      <UniqueIdentifier>{32d2bfd1-7c3f-4aba-8211-9b71cfda12c9}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -27,7 +30,7 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\ofxRSSDKv2.h">
-      <Filter>src\addons\ofxRSSDKv2</Filter>
+      <Filter>addons\ofxRSSDKv2\src</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
