@@ -21,9 +21,24 @@ namespace ofxRSSDK
 	}
 
 #pragma region Init
-	bool RSDevice::init()
+	bool RSDevice::init(float nearclip, float farclip)
 	{
-		mSenseMgr = PXCSenseManager::CreateInstance();
+		//adding
+		session = PXCSession::CreateInstance();
+		desc1 = {};
+		desc1.group = PXCSession::IMPL_GROUP_SENSOR;
+		desc1.subgroup = PXCSession::IMPL_SUBGROUP_VIDEO_CAPTURE;
+		
+		session->CreateImpl<PXCCapture>(&desc1, &c);
+		device = c->CreateDevice(0);
+		depthRange.min = nearclip;
+		depthRange.max = farclip;
+		pxcStatus st = device->SetDSMinMaxZ(depthRange);
+		
+		mSenseMgr = session->CreateSenseManager();
+
+		//over uncomment the below
+		//mSenseMgr = PXCSenseManager::CreateInstance();
 		if (mSenseMgr)
 			mIsInit = true;
 
@@ -357,6 +372,7 @@ namespace ofxRSSDK
 	{
 		return mDepthToColorFrame;
 	}
+
 
 	vector<ofVec3f> RSDevice::getPointCloud()
 	{
