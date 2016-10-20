@@ -21,9 +21,17 @@ namespace ofxRSSDK
 	}
 
 #pragma region Init
+	bool RSDevice::init()
+	{
+		mSenseMgr = PXCSenseManager::CreateInstance();
+		if (mSenseMgr)
+			mIsInit = true;
+
+		return mIsInit;
+	}
+	//use this init function to set a depth range
 	bool RSDevice::init(float nearclip, float farclip)
 	{
-		//adding
 		session = PXCSession::CreateInstance();
 		desc1 = {};
 		desc1.group = PXCSession::IMPL_GROUP_SENSOR;
@@ -34,11 +42,8 @@ namespace ofxRSSDK
 		depthRange.min = nearclip;
 		depthRange.max = farclip;
 		pxcStatus st = device->SetDSMinMaxZ(depthRange);
-		
 		mSenseMgr = session->CreateSenseManager();
 
-		//over uncomment the below
-		//mSenseMgr = PXCSenseManager::CreateInstance();
 		if (mSenseMgr)
 			mIsInit = true;
 
