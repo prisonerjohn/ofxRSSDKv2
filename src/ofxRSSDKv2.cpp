@@ -24,6 +24,7 @@ namespace ofxRSSDK
 	bool RSDevice::init()
 	{
 		mSenseMgr = PXCSenseManager::CreateInstance();
+
 		if (mSenseMgr)
 			mIsInit = true;
 
@@ -39,6 +40,8 @@ namespace ofxRSSDK
 		
 		session->CreateImpl<PXCCapture>(&desc1, &c);
 		device = c->CreateDevice(0);
+		if(!device)
+			return mIsInit;
 		depthRange.min = nearclip;
 		depthRange.max = farclip;
 		pxcStatus st = device->SetDSMinMaxZ(depthRange);
