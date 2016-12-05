@@ -59,6 +59,7 @@ namespace ofxRSSDK
 		static RSDevicePtr createUniquePtr() { return RSDevicePtr(new RSDevice()); }
 		static RSDeviceRef createSharedPtr() { return RSDeviceRef(new RSDevice()); }
 		bool init();
+		bool init(float nearclip, float farclip);
 		bool initRgb(const RGBRes& pSize, const float& pFPS);
 		bool initDepth(const DepthRes& pSize, const float& pFPS, bool pAsColor);
 		
@@ -142,6 +143,14 @@ namespace ofxRSSDK
 		ofPixels		mColorToDepthFrame;
 		ofPixels		mDepthToColorFrame;
 		ofShortPixels		mDepthFrame;
+		
+		//adding
+		PXCSession *session;
+		PXCSession::ImplDesc desc1;
+		PXCCapture* c;
+		PXCCapture::Device* device;
+		PXCRangeF32 depthRange;
+		//over
 
 		PXCSenseManager		*mSenseMgr;
 		PXCProjection		*mCoordinateMapper;
