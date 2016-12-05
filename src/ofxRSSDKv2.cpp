@@ -321,8 +321,10 @@ namespace ofxRSSDK
 			}
 		}
 
-		worldPoints.resize(depthPoints.size());
-		mCoordinateMapper->ProjectDepthToCamera(depthPoints.size(), &depthPoints[0], &worldPoints[0]);
+		if (depthPoints.size()) {
+			worldPoints.resize(depthPoints.size());
+			mCoordinateMapper->ProjectDepthToCamera(depthPoints.size(), &depthPoints[0], &worldPoints[0]);
+		}
 
 		for (int i = 0; i < depthPoints.size();++i)
 		{
