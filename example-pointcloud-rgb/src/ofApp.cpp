@@ -12,9 +12,8 @@ void ofApp::setup()
 	}
 
 	mRSSDK->initRgb(RGBRes::VGA,30);
-	mRSSDK->initDepth(DepthRes::QVGA, 30, false);
-	mRSSDK->enablePointCloud(CloudRes::FULL_RES);
-	mRSSDK->setPointCloudRange(100.0f,1000.0f);
+	mRSSDK->initDepth(DepthRes::F200_VGA, 30, false);
+	mRSSDK->enablePointCloud(CloudRes::FULL_RES, 1.0f, 1000.0f);
 
 	mRSSDK->start();
 	setupCamera();
