@@ -26,7 +26,8 @@ namespace ofxRSSDK
 		R200_SD,	// 480x360
 		R200_VGA,	// 628x468
 		F200_VGA,	// 640x480 
-		QVGA		// 320x240
+		QVGA,		// 320x240
+		SR300 = F200_VGA	// same as F200
 	};
 
 	enum RGBRes
