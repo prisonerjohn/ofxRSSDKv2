@@ -115,9 +115,10 @@ namespace ofxRSSDK
 			{
 				mHasDepth = true;
 				mShouldGetDepthAsColor = pAsColor;
-				mDepthFrame.allocate(mDepthSize.x, mDepthSize.y,1);
-				mDepth8uFrame.allocate(mDepthSize.x, mDepthSize.y, ofPixelFormat::OF_PIXELS_RGBA); //?
-				mRawDepth = new uint16_t[(int)mDepthSize.x*(int)mDepthSize.y];
+				mDepthFrame.allocate(mDepthSize.x, mDepthSize.y, OF_PIXELS_GRAY);
+				ofPixelFormat pxF = bLittleEndian ? OF_PIXELS_BGRA : OF_PIXELS_RGBA;
+				mDepth8uFrame.allocate(mDepthSize.x, mDepthSize.y, pxF);
+				mRawDepth = new uint16_t[(int)mDepthSize.x*(int)mDepthSize.y]; // ? isn't this duplicate of mDepthFrame (uses ofShortPixels) ?
 			}
 		}
 		return mHasDepth;
