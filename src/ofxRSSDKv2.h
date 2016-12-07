@@ -59,7 +59,7 @@ namespace ofxRSSDK
 		static RSDevicePtr createUniquePtr() { return RSDevicePtr(new RSDevice()); }
 		static RSDeviceRef createSharedPtr() { return RSDeviceRef(new RSDevice()); }
 		bool init();
-		bool init(float nearclip, float farclip);
+		//bool init(float nearclip, float farclip); // in mm (?)
 		bool initRgb(const RGBRes& pSize, const float& pFPS);
 		bool initDepth(const DepthRes& pSize, const float& pFPS, bool pAsColor);
 		
@@ -69,6 +69,7 @@ namespace ofxRSSDK
 		bool enableBlobTracking();
 
 		void setPointCloudRange(float pMin, float pMax);
+		PXCSenseManager* getSenseManagerPtr() { return mSenseMgr; }
 
 		bool start();
 		bool update();
@@ -144,6 +145,7 @@ namespace ofxRSSDK
 		ofPixels		mDepthToColorFrame;
 		ofShortPixels		mDepthFrame;
 		
+		/*
 		//adding
 		PXCSession *session;
 		PXCSession::ImplDesc desc1;
@@ -151,6 +153,8 @@ namespace ofxRSSDK
 		PXCCapture::Device* device;
 		PXCRangeF32 depthRange;
 		//over
+		*/
+		bool bLittleEndian;
 
 		PXCSenseManager		*mSenseMgr;
 		PXCProjection		*mCoordinateMapper;
@@ -164,6 +168,14 @@ namespace ofxRSSDK
 		vector<PXCPointF32>		mOutPoints2D;
 		vector<ofVec3f>			mPointCloud;
 		uint16_t				*mRawDepth;
+
+		bool isLittleEndian()	// utility function to determine if processor is little-endian (e.g. Intel)
+								// if little-endian, we use BGR (not RGB) pixel channel order per Intel RealSense image data specs
+		{
+			short int number = 0x1;
+			char *numPtr = (char*)&number;
+			return (numPtr[0] == 1);
+		}
 	};
 };
 #endif

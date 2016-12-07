@@ -18,6 +18,8 @@ namespace ofxRSSDK
 		mShouldGetBlobs = false;
 		mPointCloudRange = ofVec2f(0,3000);
 		mCloudRes = CloudRes::FULL_RES;
+
+		bLittleEndian = isLittleEndian(); // --> BGR vs RGB channel order
 	}
 
 #pragma region Init
@@ -30,13 +32,15 @@ namespace ofxRSSDK
 
 		return mIsInit;
 	}
-	//use this init function to set a depth range
+	// use this init function to set a depth range
+	// not working right now - at least not with SR300
+	/*
 	bool RSDevice::init(float nearclip, float farclip)
 	{
 		session = PXCSession::CreateInstance();
 		desc1 = {};
 		desc1.group = PXCSession::IMPL_GROUP_SENSOR;
-		desc1.subgroup = PXCSession::IMPL_SUBGROUP_VIDEO_CAPTURE;
+		desc1.subgroup = PXCSession::IMPL_SUBGROUP_VIDEO_CAPTURE; // ?
 		
 		session->CreateImpl<PXCCapture>(&desc1, &c);
 		device = c->CreateDevice(0);
@@ -45,6 +49,9 @@ namespace ofxRSSDK
 		depthRange.min = nearclip;
 		depthRange.max = farclip;
 		pxcStatus st = device->SetDSMinMaxZ(depthRange);
+		if (st < 0) {
+			ofLogError("RSDevice::init") << "couldn't set depth range of device";
+		}
 		mSenseMgr = session->CreateSenseManager();
 
 		if (mSenseMgr)
@@ -52,6 +59,7 @@ namespace ofxRSSDK
 
 		return mIsInit;
 	}
+	*/
 
 	bool RSDevice::initRgb(const RGBRes& pSize, const float& pFPS)
 	{
@@ -74,7 +82,8 @@ namespace ofxRSSDK
 			if (cStatus >= PXC_STATUS_NO_ERROR)
 			{
 				mHasRgb = true;
-				mRgbFrame.allocate(mRgbSize.x, mRgbSize.y,ofPixelFormat::OF_PIXELS_BGRA);
+				ofPixelFormat pxF = bLittleEndian ? OF_PIXELS_BGR : OF_PIXELS_RGB;
+				mRgbFrame.allocate(mRgbSize.x, mRgbSize.y, pxF);
 			}
 		}
 
@@ -107,7 +116,7 @@ namespace ofxRSSDK
 				mHasDepth = true;
 				mShouldGetDepthAsColor = pAsColor;
 				mDepthFrame.allocate(mDepthSize.x, mDepthSize.y,1);
-				mDepth8uFrame.allocate(mDepthSize.x, mDepthSize.y, ofPixelFormat::OF_PIXELS_RGBA);
+				mDepth8uFrame.allocate(mDepthSize.x, mDepthSize.y, ofPixelFormat::OF_PIXELS_RGBA); //?
 				mRawDepth = new uint16_t[(int)mDepthSize.x*(int)mDepthSize.y];
 			}
 		}
@@ -128,8 +137,8 @@ namespace ofxRSSDK
 			mCoordinateMapper = mSenseMgr->QueryCaptureManager()->QueryDevice()->CreateProjection();
 			if (mShouldAlign)
 			{
-				mColorToDepthFrame.allocate(mRgbSize.x, mRgbSize.y, ofPixelFormat::OF_PIXELS_RGBA);
-				mDepthToColorFrame.allocate(mRgbSize.x, mRgbSize.y, ofPixelFormat::OF_PIXELS_RGBA);
+				mColorToDepthFrame.allocate(mRgbSize.x, mRgbSize.y, ofPixelFormat::OF_PIXELS_RGBA); // BGR?
+				mDepthToColorFrame.allocate(mRgbSize.x, mRgbSize.y, ofPixelFormat::OF_PIXELS_RGBA); // BGR?
 			}
 			mIsRunning = true;
 			return true;
@@ -151,16 +160,18 @@ namespace ofxRSSDK
 			if (mHasRgb)
 			{
 				if (!mCurrentSample->color)
-					return false;
+					return false; // ? why not continue...?
 				PXCImage *cColorImage = mCurrentSample->color;
 				PXCImage::ImageData cColorData;
-				cStatus = cColorImage->AcquireAccess(PXCImage::ACCESS_READ, PXCImage::PIXEL_FORMAT_RGB32, &cColorData);
+				cStatus = cColorImage->AcquireAccess(PXCImage::ACCESS_READ, PXCImage::PIXEL_FORMAT_RGB24, &cColorData);
 				if (cStatus < PXC_STATUS_NO_ERROR)
 				{
 					cColorImage->ReleaseAccess(&cColorData);
 					return false;
 				}
-				mRgbFrame.setFromExternalPixels(reinterpret_cast<uint8_t *>(cColorData.planes[0]), mRgbSize.x, mRgbSize.y,4);
+				ofPixelFormat pxF = bLittleEndian ? OF_PIXELS_BGR : OF_PIXELS_RGB;
+				mRgbFrame.setFromExternalPixels(reinterpret_cast<uint8_t *>(cColorData.planes[0]), mRgbSize.x, mRgbSize.y, pxF);
+				// memory leak?  shouldn't this be setFromPixels()?  shouldn't be reallocated anyway
 
 				cColorImage->ReleaseAccess(&cColorData);
 				if (!mHasDepth)
@@ -195,7 +206,8 @@ namespace ofxRSSDK
 						cDepthImage->ReleaseAccess(&cDepth8uData);
 						return false;
 					}
-					mDepth8uFrame.setFromExternalPixels(reinterpret_cast<uint8_t *>(cDepth8uData.planes[0]), mDepthSize.x, mDepthSize.y, 4);
+					ofPixelFormat pxF = bLittleEndian ? OF_PIXELS_BGRA : OF_PIXELS_RGBA;
+					mDepth8uFrame.setFromExternalPixels(reinterpret_cast<uint8_t *>(cDepth8uData.planes[0]), mDepthSize.x, mDepthSize.y, pxF);
 					cDepthImage->ReleaseAccess(&cDepth8uData);
 				}
 
