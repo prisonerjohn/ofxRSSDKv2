@@ -194,14 +194,14 @@ namespace ofxRSSDK
 					cDepthImage->ReleaseAccess(&cDepthData);
 					return false;
 				}
-				mDepthFrame.setFromExternalPixels(reinterpret_cast<uint16_t *>(cDepthData.planes[0]), mDepthSize.x, mDepthSize.y, 1);
+				mDepthFrame.setFromExternalPixels(reinterpret_cast<uint16_t *>(cDepthData.planes[0]), mDepthSize.x, mDepthSize.y, OF_PIXELS_GRAY);
 				memcpy(mRawDepth, reinterpret_cast<uint16_t *>(cDepthData.planes[0]), (size_t)((int)mDepthSize.x*(int)mDepthSize.y*sizeof(uint16_t)));			
 				cDepthImage->ReleaseAccess(&cDepthData);
 
 				if (mShouldGetDepthAsColor)
 				{
 					PXCImage::ImageData cDepth8uData;
-					cStatus = cDepthImage->AcquireAccess(PXCImage::ACCESS_READ, PXCImage::PIXEL_FORMAT_RGB32, &cDepth8uData);
+					cStatus = cDepthImage->AcquireAccess(PXCImage::ACCESS_READ, PXCImage::PIXEL_FORMAT_RGB32, &cDepth8uData); // ? why not use 8 bit gray ?
 					if (cStatus < PXC_STATUS_NO_ERROR)
 					{
 						cDepthImage->ReleaseAccess(&cDepth8uData);
@@ -357,9 +357,12 @@ namespace ofxRSSDK
 			}
 		}
 
-		if (depthPoints.size()) {
-			worldPoints.resize(depthPoints.size());
-			mCoordinateMapper->ProjectDepthToCamera(depthPoints.size(), &depthPoints[0], &worldPoints[0]);
+		size_t nPts = depthPoints.size();
+		if (nPts) {
+			worldPoints.resize(nPts);
+			mCoordinateMapper->ProjectDepthToCamera((pxcI32)depthPoints.size(), &depthPoints[0], &worldPoints[0]);
+
+			mPointCloud.reserve(nPts);
 		}
 
 		for (int i = 0; i < depthPoints.size();++i)
@@ -367,6 +370,10 @@ namespace ofxRSSDK
 			PXCPoint3DF32 p = worldPoints[i];
 			mPointCloud.push_back(ofVec3f(p.x, p.y, p.z));
 		}
+	}
+
+	void RSDevice::updateFaces() {
+
 	}
 #pragma endregion
 
