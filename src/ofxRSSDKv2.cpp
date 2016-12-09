@@ -66,24 +66,38 @@ namespace ofxRSSDK
 		pxcStatus cStatus;
 		if (mSenseMgr)
 		{
-			switch (pSize)
+			if (pSize != RGBRes::ANY_RGBRES) 
 			{
-			case RGBRes::VGA:
-				mRgbSize = ofVec2f(640, 480);
-				break;
-			case RGBRes::HD720:
-				mRgbSize = ofVec2f(1280, 720);
-				break;
-			case RGBRes::HD1080:
-				mRgbSize = ofVec2f(1920, 1080);
-				break;
+				switch (pSize)
+				{
+				case RGBRes::VGA:
+					mRgbSize = ofVec2f(640, 480);
+					break;
+				case RGBRes::HD720:
+					mRgbSize = ofVec2f(1280, 720);
+					break;
+				case RGBRes::HD1080:
+					mRgbSize = ofVec2f(1920, 1080);
+					break;
+				}
+
+				if (pFPS != 0.f)
+					cStatus = mSenseMgr->EnableStream(PXCCapture::STREAM_TYPE_COLOR, mRgbSize.x, mRgbSize.y, pFPS);
+				else
+					cStatus = mSenseMgr->EnableStream(PXCCapture::STREAM_TYPE_COLOR, mRgbSize.x, mRgbSize.y);
 			}
-			cStatus = mSenseMgr->EnableStream(PXCCapture::STREAM_TYPE_COLOR, mRgbSize.x, mRgbSize.y, pFPS);
+			else 
+			{
+				if (pFPS != 0.f)
+					cStatus = mSenseMgr->EnableStream(PXCCapture::STREAM_TYPE_COLOR, 0, 0, pFPS);
+				else
+					cStatus = mSenseMgr->EnableStream(PXCCapture::STREAM_TYPE_COLOR);
+			}
 			if (cStatus >= PXC_STATUS_NO_ERROR)
 			{
 				mHasRgb = true;
-				ofPixelFormat pxF = bLittleEndian ? OF_PIXELS_BGR : OF_PIXELS_RGB;
-				mRgbFrame.allocate(mRgbSize.x, mRgbSize.y, pxF);
+				//ofPixelFormat pxF = bLittleEndian ? OF_PIXELS_BGR : OF_PIXELS_RGB;
+				//mRgbFrame.allocate(mRgbSize.x, mRgbSize.y, pxF);
 			}
 		}
 
@@ -152,12 +166,21 @@ namespace ofxRSSDK
 		pxcStatus cStatus;
 		if (mSenseMgr)
 		{
-			cStatus = mSenseMgr->AcquireFrame(false,0);
+			// check new frame
+			cStatus = mSenseMgr->AcquireFrame(true,0);
 			if (cStatus < PXC_STATUS_NO_ERROR)
 				return false;
+
+			// faces
+			if (mShouldGetFaces) {
+				updateFaces();
+			}
+
 			PXCCapture::Sample *mCurrentSample = mSenseMgr->QuerySample();
 			if (!mCurrentSample)
 				return false;
+
+			// color
 			if (mHasRgb)
 			{
 				if (!mCurrentSample->color)
@@ -181,6 +204,8 @@ namespace ofxRSSDK
 					return true;
 				}
 			}
+
+			// depth
 			if (mHasDepth)
 			{
 				if (!mCurrentSample->depth)
@@ -224,6 +249,7 @@ namespace ofxRSSDK
 				}
 			}
 
+			// mapped color<-->depth imgs
 			if (mHasDepth&&mHasRgb&&mShouldAlign&&mAlignMode==AlignMode::ALIGN_FRAME)
 			{
 				PXCImage *cMappedColor = mCoordinateMapper->CreateColorImageMappedToDepth(mCurrentSample->depth, mCurrentSample->color);
@@ -268,7 +294,7 @@ namespace ofxRSSDK
 		if (mSenseMgr)
 		{
 			mCoordinateMapper->Release();
-			mSenseMgr->Close();
+
 			if(mShouldGetBlobs)
 			{
 				if(mBlobTracker)
@@ -276,9 +302,12 @@ namespace ofxRSSDK
 			}
 			if(mShouldGetFaces)
 			{
-				if(mFaceTracker)
-					mFaceTracker->Release();
+				if (mFaceData)
+					mFaceData->Release();
 			}
+
+			mSenseMgr->Close();
+
 			return true;
 		}
 		delete [] mRawDepth;
@@ -307,6 +336,9 @@ namespace ofxRSSDK
 						}
 						config->ApplyChanges();
 						config->Release();
+
+						mFaceData = mFaceTracker->CreateOutput();
+
 						mShouldGetFaces = true;
 					}
 					else
@@ -372,9 +404,44 @@ namespace ofxRSSDK
 		}
 	}
 
+
 	void RSDevice::updateFaces() {
 
+		PXCFaceModule* face = mSenseMgr->QueryFace(); // get face module
+		if (face) {
+
+			// update face data
+			if (mFaceData)
+				mFaceData->Update();
+			else
+				ofLogError("ofxRSSDK") << "unable to update face data, null pointer";
+
+			//PXCCapture::Sample* sample = mSenseMgr->QueryFaceSample();
+
+			// num faces
+			pxcI32 nFaces = mFaceData->QueryNumberOfDetectedFaces();
+
+			mFaces.clear();
+			mFaces.resize((size_t)nFaces);
+
+			for (int i = 0; i < nFaces; i++){
+
+				// get landmarks
+				PXCFaceData::Face* face = mFaceData->QueryFaceByIndex(i);
+				if (!face) continue;
+
+				PXCFaceData::LandmarksData* landmarkData = face->QueryLandmarks();
+				if (!landmarkData) continue;
+
+				mFaces[i].resize((size_t)landmarkData->QueryNumPoints()); // allocate space for landmarks
+
+				if (!landmarkData->QueryPoints(mFaces[i].data())) // fills face vector data with landmarks
+					ofLogError("ofxRSSDK") << "unable to query landmarks for face " << i;
+			}
+		}
+
 	}
+
 #pragma endregion
 
 #pragma region Getters

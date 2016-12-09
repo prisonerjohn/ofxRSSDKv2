@@ -23,6 +23,7 @@ namespace ofxRSSDK
 
 	enum DepthRes
 	{
+		ANY_DEPTHRES,		// lets SDK negotiate
 		R200_SD,	// 480x360
 		R200_VGA,	// 628x468
 		F200_VGA,	// 640x480 
@@ -32,6 +33,7 @@ namespace ofxRSSDK
 
 	enum RGBRes
 	{
+		ANY_RGBRES,		// lets SDK negotiate
 		VGA,
 		HD720,
 		HD1080
@@ -61,7 +63,9 @@ namespace ofxRSSDK
 		bool init();
 		//bool init(float nearclip, float farclip); // in mm (?)
 		bool initRgb(const RGBRes& pSize, const float& pFPS);
+		bool initRgb(const RGBRes& pSize) { return initRgb(pSize, 0.f); }
 		bool initDepth(const DepthRes& pSize, const float& pFPS, bool pAsColor);
+		bool initDepth(const DepthRes& pSize, bool pAsColor=true) { return initDepth(pSize, 0.f, pAsColor); }
 		
 		void enableAlignedImages(bool pState = true, AlignMode pMode = AlignMode::ALIGN_UVS_ONLY) { mShouldAlign = pState; mAlignMode = pMode; }
 		void enablePointCloud(CloudRes pCloudRes, float pMinDepth, float pMaxDepth) { mCloudRes=pCloudRes; mShouldGetPointCloud=true; mPointCloudRange = ofVec2f(pMinDepth,pMaxDepth);}
@@ -118,6 +122,8 @@ namespace ofxRSSDK
 		const int		getRgbWidth() { return mRgbSize.x; }
 		const int		getRgbHeight() { return mRgbSize.y; }
 
+		const vector<vector<PXCFaceData::LandmarkPoint>>& getFaces() { return mFaces; }
+
 	private:
 		void			updatePointCloud();
 		void			updateFaces();
@@ -154,7 +160,6 @@ namespace ofxRSSDK
 		PXCRangeF32 depthRange;
 		//over
 		*/
-		bool bLittleEndian;
 
 		PXCSenseManager		*mSenseMgr;
 		PXCProjection		*mCoordinateMapper;
@@ -168,6 +173,10 @@ namespace ofxRSSDK
 		vector<PXCPointF32>		mOutPoints2D;
 		vector<ofVec3f>			mPointCloud;
 		uint16_t				*mRawDepth;
+
+		PXCFaceData* mFaceData;
+		vector<vector<PXCFaceData::LandmarkPoint>> mFaces;
+		bool bLittleEndian;
 
 		bool isLittleEndian()	// utility function to determine if processor is little-endian (e.g. Intel)
 								// if little-endian, we use BGR (not RGB) pixel channel order per Intel RealSense image data specs
