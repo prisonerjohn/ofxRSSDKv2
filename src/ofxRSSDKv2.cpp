@@ -152,8 +152,9 @@ namespace ofxRSSDK
 			mCoordinateMapper = mSenseMgr->QueryCaptureManager()->QueryDevice()->CreateProjection();
 			if (mShouldAlign)
 			{
-				mColorToDepthFrame.allocate(mRgbSize.x, mRgbSize.y, ofPixelFormat::OF_PIXELS_RGBA); // BGR?
-				mDepthToColorFrame.allocate(mRgbSize.x, mRgbSize.y, ofPixelFormat::OF_PIXELS_RGBA); // BGR?
+				ofPixelFormat pxF = bLittleEndian ? OF_PIXELS_BGRA : OF_PIXELS_RGBA;
+				mColorToDepthFrame.allocate(mRgbSize.x, mRgbSize.y, pxF);
+				mDepthToColorFrame.allocate(mRgbSize.x, mRgbSize.y, pxF);
 			}
 			mIsRunning = true;
 			return true;
