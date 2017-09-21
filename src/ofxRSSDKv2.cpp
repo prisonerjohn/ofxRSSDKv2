@@ -22,6 +22,9 @@ namespace ofxRSSDK
 #endif
 		mPointCloudRange = ofVec2f(0,3000);
 		mCloudRes = CloudRes::FULL_RES;
+		mCoordinateMapper = nullptr;
+		mSenseMgr = nullptr;
+		mRawDepth = nullptr;
 
 		bLittleEndian = isLittleEndian(); // --> BGR vs RGB channel order
 	}
@@ -160,9 +163,15 @@ namespace ofxRSSDK
 				mColorToDepthFrame.allocate(mRgbSize.x, mRgbSize.y, pxF);
 				mDepthToColorFrame.allocate(mRgbSize.x, mRgbSize.y, pxF);
 			}
+
+			PXCCalibration *calib = mCoordinateMapper->QueryInstance<PXCCalibration>();
+			calib->QueryStreamProjectionParameters(PXCCapture::STREAM_TYPE_COLOR, &rgbCalibration, &rgbTransformation);
+			calib->QueryStreamProjectionParameters(PXCCapture::STREAM_TYPE_DEPTH, &depthCalibration, &depthTransformation);
+
 			mIsRunning = true;
 			return true;
 		}
+		ofLogError("RSDevice::start") << "Error initializing device " << cStatus;
 		return false;
 	}
 
@@ -173,8 +182,10 @@ namespace ofxRSSDK
 		{
 			// check new frame
 			cStatus = mSenseMgr->AcquireFrame(true,0);
-			if (cStatus < PXC_STATUS_NO_ERROR)
+			if (cStatus < PXC_STATUS_NO_ERROR) {
+				//ofLogError("RSDevice::update") << "Error " << cStatus << endl;
 				return false;
+			}
 
 #ifdef REALSENSE_USE_FACE
 			// faces
@@ -226,6 +237,7 @@ namespace ofxRSSDK
 					cDepthImage->ReleaseAccess(&cDepthData);
 					return false;
 				}
+
 				mDepthFrame.setFromExternalPixels(reinterpret_cast<uint16_t *>(cDepthData.planes[0]), mDepthSize.x, mDepthSize.y, OF_PIXELS_GRAY);
 				memcpy(mRawDepth, reinterpret_cast<uint16_t *>(cDepthData.planes[0]), (size_t)((int)mDepthSize.x*(int)mDepthSize.y*sizeof(uint16_t)));			
 				cDepthImage->ReleaseAccess(&cDepthData);
@@ -257,7 +269,7 @@ namespace ofxRSSDK
 			}
 
 			// mapped color<-->depth imgs
-			if (mHasDepth&&mHasRgb&&mShouldAlign&&mAlignMode==AlignMode::ALIGN_FRAME)
+			if (mHasDepth && mHasRgb && mShouldAlign&&mAlignMode == AlignMode::ALIGN_FRAME)
 			{
 				PXCImage *cMappedColor = mCoordinateMapper->CreateColorImageMappedToDepth(mCurrentSample->depth, mCurrentSample->color);
 				PXCImage *cMappedDepth = mCoordinateMapper->CreateDepthImageMappedToColor(mCurrentSample->color, mCurrentSample->depth);
@@ -300,7 +312,9 @@ namespace ofxRSSDK
 	{
 		if (mSenseMgr)
 		{
-			mCoordinateMapper->Release();
+			if (mCoordinateMapper != nullptr) {
+				mCoordinateMapper->Release();
+			}
 
 #ifdef REALSENSE_USE_BLOB
 			if(mShouldGetBlobs)
@@ -320,7 +334,9 @@ namespace ofxRSSDK
 
 			return true;
 		}
-		delete [] mRawDepth;
+		if (mRawDepth) {
+			delete[] mRawDepth;
+		}
 		return false;
 	}
 

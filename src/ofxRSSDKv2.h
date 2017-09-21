@@ -9,6 +9,8 @@
 #include "ofMain.h"
 #include "pxcsensemanager.h"
 #include "pxcprojection.h"
+#include "pxccalibration.h"
+
 #ifdef REALSENSE_USE_BLOB
 #include "pxcblobmodule.h"
 #endif
@@ -135,6 +137,12 @@ namespace ofxRSSDK
 		const vector<vector<PXCFaceData::LandmarkPoint>>& getFaces() { return mFaces; }
 #endif	
 
+		const PXCCalibration::StreamCalibration& getRgbCalibration() { return rgbCalibration; }
+		const PXCCalibration::StreamTransform& getRgbTransformation() { return rgbTransformation; }
+
+		const PXCCalibration::StreamCalibration& getDepthCalibration() { return depthCalibration;  }
+		const PXCCalibration::StreamTransform& getDepthTransformation() { return depthTransformation;  }
+
 	private:
 		void			updatePointCloud();
 #ifdef REALSENSE_USE_FACE
@@ -170,6 +178,12 @@ namespace ofxRSSDK
 		ofPixels		mDepthToColorFrame;
 		ofShortPixels		mDepthFrame;
 		
+		PXCCalibration::StreamCalibration rgbCalibration;
+		PXCCalibration::StreamTransform rgbTransformation;
+
+		PXCCalibration::StreamCalibration depthCalibration;
+		PXCCalibration::StreamTransform depthTransformation;
+
 		/*
 		//adding
 		PXCSession *session;
