@@ -9,9 +9,14 @@
 #include "ofMain.h"
 #include "pxcsensemanager.h"
 #include "pxcprojection.h"
+#ifdef REALSENSE_USE_BLOB
 #include "pxcblobmodule.h"
+#endif
+
+#ifdef REALSENSE_USE_FACE
 #include "pxcfacemodule.h"
 #include "pxcfaceconfiguration.h"
+#endif
 
 using namespace std;
 
@@ -69,8 +74,12 @@ namespace ofxRSSDK
 		
 		void enableAlignedImages(bool pState = true, AlignMode pMode = AlignMode::ALIGN_UVS_ONLY) { mShouldAlign = pState; mAlignMode = pMode; }
 		void enablePointCloud(CloudRes pCloudRes, float pMinDepth, float pMaxDepth) { mCloudRes=pCloudRes; mShouldGetPointCloud=true; mPointCloudRange = ofVec2f(pMinDepth,pMaxDepth);}
+#ifdef REALSENSE_USE_FACE
 		bool enableFaceTracking(bool pUseDepth);
+#endif
+#ifdef REALSENSE_USE_BLOB
 		bool enableBlobTracking();
+#endif
 
 		void setPointCloudRange(float pMin, float pMax);
 		PXCSenseManager* getSenseManagerPtr() { return mSenseMgr; }
@@ -122,12 +131,18 @@ namespace ofxRSSDK
 		const int		getRgbWidth() { return mRgbSize.x; }
 		const int		getRgbHeight() { return mRgbSize.y; }
 
+#ifdef REALSENSE_USE_FACE
 		const vector<vector<PXCFaceData::LandmarkPoint>>& getFaces() { return mFaces; }
+#endif	
 
 	private:
 		void			updatePointCloud();
+#ifdef REALSENSE_USE_FACE
 		void			updateFaces();
+#endif
+#ifdef REALSENSE_USE_BLOB
 		void			updateBlobs();
+#endif
 
 		bool			mIsInit,
 						mIsRunning,
@@ -135,9 +150,13 @@ namespace ofxRSSDK
 						mHasDepth,
 						mShouldAlign,
 						mShouldGetDepthAsColor,
-						mShouldGetPointCloud,
-						mShouldGetFaces,
-						mShouldGetBlobs;
+						mShouldGetPointCloud;
+#ifdef REALSENSE_USE_FACE
+		bool			mShouldGetFaces;
+#endif
+#ifdef REALSENSE_USE_BLOB
+		bool			mShouldGetBlobs;
+#endif
 
 		AlignMode		mAlignMode;
 		CloudRes		mCloudRes;
@@ -165,8 +184,12 @@ namespace ofxRSSDK
 		PXCProjection		*mCoordinateMapper;
 		PXCCapture::Sample	*mCurrentSample;
 
-		PXCBlobModule		*mBlobTracker;
+#ifdef REALSENSE_USE_FACE
 		PXCFaceModule		*mFaceTracker;
+#endif
+#ifdef REALSENSE_USE_BLOB
+		PXCBlobModule		*mBlobTracker;
+#endif
 
 		vector<PXCPoint3DF32>	mInPoints3D;
 		vector<PXCPoint3DF32>	mOutPoints3D;
@@ -174,8 +197,11 @@ namespace ofxRSSDK
 		vector<ofVec3f>			mPointCloud;
 		uint16_t				*mRawDepth;
 
+#ifdef REALSENSE_USE_FACE
 		PXCFaceData* mFaceData;
 		vector<vector<PXCFaceData::LandmarkPoint>> mFaces;
+#endif
+		
 		bool bLittleEndian;
 
 		bool isLittleEndian()	// utility function to determine if processor is little-endian (e.g. Intel)

@@ -14,8 +14,12 @@ namespace ofxRSSDK
 		mShouldAlign = false;
 		mShouldGetDepthAsColor = false;
 		mShouldGetPointCloud = false;
+#ifdef REALSENSE_USE_FACE
 		mShouldGetFaces = false;
+#endif
+#ifdef REALSENSE_USE_BLOB
 		mShouldGetBlobs = false;
+#endif
 		mPointCloudRange = ofVec2f(0,3000);
 		mCloudRes = CloudRes::FULL_RES;
 
@@ -172,10 +176,12 @@ namespace ofxRSSDK
 			if (cStatus < PXC_STATUS_NO_ERROR)
 				return false;
 
+#ifdef REALSENSE_USE_FACE
 			// faces
 			if (mShouldGetFaces) {
 				updateFaces();
 			}
+#endif
 
 			PXCCapture::Sample *mCurrentSample = mSenseMgr->QuerySample();
 			if (!mCurrentSample)
@@ -296,17 +302,20 @@ namespace ofxRSSDK
 		{
 			mCoordinateMapper->Release();
 
+#ifdef REALSENSE_USE_BLOB
 			if(mShouldGetBlobs)
 			{
 				if(mBlobTracker)
 					mBlobTracker->Release();
 			}
+#endif
+#ifdef REALSENSE_USE_FACE
 			if(mShouldGetFaces)
 			{
 				if (mFaceData)
 					mFaceData->Release();
 			}
-
+#endif
 			mSenseMgr->Close();
 
 			return true;
@@ -316,6 +325,8 @@ namespace ofxRSSDK
 	}
 
 #pragma region Enable
+
+#ifdef REALSENSE_USE_FACE
 		bool RSDevice::enableFaceTracking(bool pUseDepth)
 		{
 			if(mSenseMgr)
@@ -350,7 +361,9 @@ namespace ofxRSSDK
 			}
 			return false;
 		}
+#endif
 
+#ifdef REALSENSE_USE_BLOB
 		bool RSDevice::enableBlobTracking()
 		{
 			if(mSenseMgr)
@@ -369,6 +382,8 @@ namespace ofxRSSDK
 			return false;
 
 		}
+#endif
+
 #pragma endregion
 
 #pragma region Update
@@ -405,7 +420,7 @@ namespace ofxRSSDK
 		}
 	}
 
-
+#ifdef REALSENSE_USE_FACE
 	void RSDevice::updateFaces() {
 
 		PXCFaceModule* face = mSenseMgr->QueryFace(); // get face module
@@ -442,6 +457,7 @@ namespace ofxRSSDK
 		}
 
 	}
+#endif
 
 #pragma endregion
 
